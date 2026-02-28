@@ -28,19 +28,83 @@
     </svg>
   </div>
 
+  <!-- Auth Modal -->
+  <div class="auth-overlay" id="auth-overlay" role="dialog" aria-modal="true" aria-label="Sign in">
+    <div class="auth-modal">
+      <button class="auth-close" id="auth-close" aria-label="Close">✕</button>
+      <div class="auth-logo" aria-hidden="true">✝</div>
+      <p class="auth-tagline">Prayer Journal 2026</p>
+
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" data-tab="signin" role="tab">Sign In</button>
+        <button class="auth-tab"        data-tab="signup" role="tab">Create Account</button>
+      </div>
+
+      <!-- Sign In Form -->
+      <form class="auth-form active" id="form-signin" novalidate>
+        <div class="form-group">
+          <label for="signin-email">Email</label>
+          <input type="email" id="signin-email" placeholder="your@email.com" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label for="signin-password">Password</label>
+          <input type="password" id="signin-password" placeholder="••••••••" autocomplete="current-password" required />
+        </div>
+        <p class="auth-error" id="signin-error" role="alert"></p>
+        <button type="submit" class="submit-btn full-w">
+          <span class="btn-cross" aria-hidden="true">✝</span> Sign In
+        </button>
+        <p class="auth-switch">No account? <button type="button" class="link-btn" data-tab="signup">Create one free</button></p>
+      </form>
+
+      <!-- Sign Up Form -->
+      <form class="auth-form" id="form-signup" novalidate>
+        <div class="form-group">
+          <label for="signup-name">Your Name</label>
+          <input type="text" id="signup-name" placeholder="First and last name" autocomplete="name" maxlength="60" required />
+        </div>
+        <div class="form-group">
+          <label for="signup-email">Email</label>
+          <input type="email" id="signup-email" placeholder="your@email.com" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label for="signup-password">Password</label>
+          <input type="password" id="signup-password" placeholder="At least 6 characters" autocomplete="new-password" minlength="6" required />
+        </div>
+        <p class="auth-error" id="signup-error" role="alert"></p>
+        <button type="submit" class="submit-btn full-w">
+          <span class="btn-cross" aria-hidden="true">✝</span> Create Account
+        </button>
+        <p class="auth-switch">Already have an account? <button type="button" class="link-btn" data-tab="signin">Sign in</button></p>
+      </form>
+
+      <!-- Check Email State -->
+      <div class="auth-check-email" id="auth-check-email">
+        <div class="check-email-icon">✉</div>
+        <h3>Check your email</h3>
+        <p>We sent a confirmation link to your inbox. Click it to activate your account, then sign in here.</p>
+        <button class="submit-btn full-w" onclick="switchAuthTab('signin')">
+          <span class="btn-cross" aria-hidden="true">✝</span> Back to Sign In
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Navbar -->
   <nav class="navbar">
     <button class="nav-brand" id="nav-brand-btn" aria-label="Go to home">
       <span class="nav-cross" aria-hidden="true">✝</span>
       <span>Prayer Journal 2026</span>
     </button>
-    <div class="nav-people" id="nav-people" aria-label="Quick navigation"></div>
+    <div class="nav-center">
+      <div class="nav-people" id="nav-people" aria-label="Quick navigation"></div>
+    </div>
+    <div class="nav-auth" id="nav-auth"></div>
   </nav>
 
   <main>
-    <!-- ── HOME VIEW ──────────────────────────────────── -->
+    <!-- HOME VIEW -->
     <div id="view-home" class="view active">
-
       <header class="hero">
         <div class="hero-glow" aria-hidden="true"></div>
         <div class="hero-cross-wrap" aria-hidden="true">
@@ -56,16 +120,13 @@
             <rect x="0"  y="36" width="100" height="22" rx="5" fill="url(#cg)"/>
           </svg>
         </div>
-
         <h1 class="hero-title">2026 Prayer Journey</h1>
         <p class="hero-subtitle">Lifting Each Other Up in Faith</p>
-
         <div class="divider" aria-hidden="true">
           <span class="divider-line"></span>
           <span class="divider-gem">✦</span>
           <span class="divider-line"></span>
         </div>
-
         <p class="hero-verse">"The prayer of a righteous person is powerful and effective."</p>
         <p class="hero-verse-ref">— James 5:16</p>
       </header>
@@ -76,16 +137,13 @@
           Our Prayer Family
           <span class="sh-gem" aria-hidden="true">✦</span>
         </h2>
-        <div class="people-grid" id="people-grid">
-          <!-- Cards injected by JS -->
-        </div>
+        <div class="people-grid" id="people-grid"></div>
       </section>
     </div>
 
-    <!-- ── PERSON DETAIL VIEW ─────────────────────────── -->
+    <!-- PERSON DETAIL VIEW -->
     <div id="view-person" class="view">
       <div class="detail-wrap">
-
         <button class="back-btn" id="back-btn">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -93,11 +151,9 @@
           Back to All
         </button>
 
-        <!-- Person header -->
         <div class="person-header">
           <div class="person-icon" aria-hidden="true">✦</div>
           <h1 class="person-name" id="detail-name"></h1>
-
           <div class="scripture-card">
             <span class="qmark qmark-open" aria-hidden="true">"</span>
             <blockquote class="scripture-text" id="detail-scripture"></blockquote>
@@ -106,50 +162,13 @@
           </div>
         </div>
 
-        <!-- Prayers -->
         <section class="prayers-section">
           <h2 class="section-heading sm">
             <span class="sh-cross" aria-hidden="true">✝</span>
             Prayers
           </h2>
-          <div class="prayers-list" id="prayers-list">
-            <!-- Injected by JS -->
-          </div>
-
-          <!-- Add Prayer Form -->
-          <div class="add-prayer-card" id="add-prayer-card">
-            <h3 class="form-heading">Add Your Prayer</h3>
-            <form id="prayer-form" novalidate>
-              <div class="form-group">
-                <label for="author-name">Your Name</label>
-                <input
-                  type="text"
-                  id="author-name"
-                  autocomplete="name"
-                  placeholder="Enter your name"
-                  maxlength="60"
-                  required
-                />
-              </div>
-              <div class="form-group">
-                <label for="prayer-content">Your Prayer</label>
-                <textarea
-                  id="prayer-content"
-                  rows="6"
-                  placeholder="Write your prayer here…"
-                  maxlength="3000"
-                  required
-                ></textarea>
-              </div>
-              <div class="form-actions">
-                <span class="char-count" id="char-count">0 / 3000</span>
-                <button type="submit" class="submit-btn" id="submit-btn">
-                  <span class="btn-cross" aria-hidden="true">✝</span>
-                  Post Prayer
-                </button>
-              </div>
-            </form>
-          </div>
+          <div class="prayers-list" id="prayers-list"></div>
+          <div id="add-prayer-card" class="add-prayer-card"></div>
         </section>
       </div>
     </div>
@@ -160,7 +179,6 @@
     <p>Walking in faith together · 2026</p>
   </footer>
 
-  <!-- type="module" required for Supabase ES import -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
