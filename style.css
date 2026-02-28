@@ -983,21 +983,61 @@ footer {
   color: var(--gold-lt);
 }
 
-/* ── Edit button & inline edit ───────────────────────────────────────────── */
-.edit-btn {
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  padding: .2rem .55rem;
-  border-radius: 8px;
-  font-size: .85rem;
-  cursor: pointer;
-  transition: all .2s;
-  line-height: 1.4;
+/* ── Edit & Delete buttons ───────────────────────────────────────────────── */
+.prayer-actions {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
   margin-left: auto;
   flex-shrink: 0;
 }
-.edit-btn:hover { border-color: var(--gold); color: var(--gold); }
+.edit-btn,
+.delete-btn {
+  background: none;
+  border: 1px solid var(--border);
+  padding: .2rem .55rem;
+  border-radius: 8px;
+  font-size: .82rem;
+  cursor: pointer;
+  transition: all .2s;
+  line-height: 1.4;
+  font-family: 'Inter', sans-serif;
+}
+.edit-btn   { color: var(--text-dim); }
+.delete-btn { color: var(--text-dim); }
+.edit-btn:hover   { border-color: var(--gold);  color: var(--gold); }
+.delete-btn:hover { border-color: #b05050;       color: #c06060; }
+
+/* Delete confirmation inline */
+.delete-confirm-text {
+  font-size: .8rem;
+  color: var(--text-dim);
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+.delete-cancel-btn,
+.delete-confirm-btn {
+  padding: .2rem .6rem;
+  border-radius: 8px;
+  font-size: .8rem;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.delete-cancel-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.delete-cancel-btn:hover  { border-color: var(--gold); color: var(--gold); }
+.delete-confirm-btn {
+  background: none;
+  border: 1px solid #7a3030;
+  color: #c06060;
+}
+.delete-confirm-btn:hover { background: rgba(192,80,80,.12); border-color: #c06060; }
+.delete-confirm-btn:disabled { opacity: .5; cursor: not-allowed; }
 
 .edit-area { margin-top: .75rem; }
 .edit-textarea {

@@ -290,7 +290,10 @@ async function loadPrayers(name) {
 function renderPrayer(p) {
   const initials  = p.author_name.split(/\s+/).map(w=>w[0]||'').join('').toUpperCase().slice(0,2);
   const isLeader  = p.author_name.trim().toLowerCase() === 'avery';
+  const isAnon    = p.user_id === null || p.user_id === undefined;
   const isOwner   = currentUser && currentUser.id === p.user_id;
+  const canEdit   = isOwner;
+  const canDelete = currentUser && (isOwner || isAnon);
   const date      = new Date(p.created_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
 
   return `
@@ -304,25 +307,38 @@ function renderPrayer(p) {
           </div>
           <div class="prayer-date">${date}</div>
         </div>
-        ${isOwner ? `<button class="edit-btn" data-id="${p.id}" title="Edit prayer">✎ Edit</button>` : ''}
+        ${(canEdit || canDelete) ? `
+          <div class="prayer-actions">
+            ${canEdit   ? `<button class="edit-btn"   data-id="${p.id}">✎ Edit</button>`   : ''}
+            ${canDelete ? `<button class="delete-btn" data-id="${p.id}">✕ Delete</button>` : ''}
+          </div>` : ''}
       </div>
       <p class="prayer-text">${escNl(p.content)}</p>
     </div>`;
 }
 
-// ── Edit prayer ───────────────────────────────────────────────────────────
+// ── Edit & Delete prayers (event delegation) ──────────────────────────────
 document.getElementById('prayers-list').addEventListener('click', async e => {
-  const editBtn = e.target.closest('.edit-btn');
-  if (!editBtn) return;
+  const editBtn    = e.target.closest('.edit-btn');
+  const deleteBtn  = e.target.closest('.delete-btn');
+  const confirmBtn = e.target.closest('.delete-confirm-btn');
+  const cancelBtn  = e.target.closest('.delete-cancel-btn');
 
-  const id   = editBtn.dataset.id;
+  if (editBtn)    handleEdit(editBtn.dataset.id);
+  if (deleteBtn)  handleDeletePrompt(deleteBtn.dataset.id);
+  if (confirmBtn) await handleDeleteExecute(confirmBtn.dataset.id);
+  if (cancelBtn)  handleDeleteCancel(cancelBtn.closest('[data-prayer-id]').dataset.prayerId);
+});
+
+function handleEdit(id) {
   const card = document.querySelector(`[data-prayer-id="${id}"]`);
-  if (!card || card.querySelector('.edit-area')) return; // already editing
+  if (!card || card.querySelector('.edit-area')) return;
 
-  const original = card.dataset.content;
-  const textEl   = card.querySelector('.prayer-text');
-  textEl.style.display = 'none';
-  editBtn.style.display = 'none';
+  const original  = card.dataset.content;
+  const textEl    = card.querySelector('.prayer-text');
+  const actionsEl = card.querySelector('.prayer-actions');
+  textEl.style.display    = 'none';
+  if (actionsEl) actionsEl.style.display = 'none';
 
   const editArea = document.createElement('div');
   editArea.className = 'edit-area';
@@ -337,42 +353,82 @@ document.getElementById('prayers-list').addEventListener('click', async e => {
   card.appendChild(editArea);
   editArea.querySelector('textarea').focus();
 
-  // Cancel
   editArea.querySelector('.edit-cancel').addEventListener('click', () => {
     textEl.style.display = '';
-    editBtn.style.display = '';
+    if (actionsEl) actionsEl.style.display = '';
     editArea.remove();
   });
 
-  // Save
   editArea.querySelector(`#save-${id}`).addEventListener('click', async () => {
     const newContent = editArea.querySelector('textarea').value.trim();
     if (!newContent) return;
-
     const saveBtn = editArea.querySelector(`#save-${id}`);
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<span class="btn-cross">✝</span> Saving…';
 
-    const { error } = await supabase
-      .from('prayers')
-      .update({ content: newContent })
-      .eq('id', id);
-
+    const { error } = await supabase.from('prayers').update({ content: newContent }).eq('id', id);
     if (error) {
       toast('Could not save — please try again.');
       saveBtn.disabled = false;
       saveBtn.innerHTML = '<span class="btn-cross">✝</span> Save';
     } else {
-      // Update card in-place
       textEl.innerHTML = escNl(newContent);
       card.dataset.content = newContent;
       textEl.style.display = '';
-      editBtn.style.display = '';
+      if (actionsEl) actionsEl.style.display = '';
       editArea.remove();
       toast('Prayer updated. ✝');
     }
   });
-});
+}
+
+function handleDeletePrompt(id) {
+  const card = document.querySelector(`[data-prayer-id="${id}"]`);
+  if (!card) return;
+  const actionsEl = card.querySelector('.prayer-actions');
+  if (!actionsEl) return;
+  // Save original so cancel can restore it
+  actionsEl.dataset.original = actionsEl.innerHTML;
+  actionsEl.innerHTML = `
+    <span class="delete-confirm-text">Delete this prayer?</span>
+    <button class="delete-cancel-btn">Cancel</button>
+    <button class="delete-confirm-btn" data-id="${id}">Delete</button>`;
+}
+
+function handleDeleteCancel(id) {
+  const card = document.querySelector(`[data-prayer-id="${id}"]`);
+  if (!card) return;
+  const actionsEl = card.querySelector('.prayer-actions');
+  if (actionsEl?.dataset.original) {
+    actionsEl.innerHTML = actionsEl.dataset.original;
+    delete actionsEl.dataset.original;
+  }
+}
+
+async function handleDeleteExecute(id) {
+  const card      = document.querySelector(`[data-prayer-id="${id}"]`);
+  const confirmBtn = card?.querySelector('.delete-confirm-btn');
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Deleting…'; }
+
+  const { error } = await supabase.from('prayers').delete().eq('id', id);
+
+  if (error) {
+    toast('Could not delete — please try again.');
+    handleDeleteCancel(id);
+  } else {
+    card.style.transition = 'opacity .3s, transform .3s';
+    card.style.opacity    = '0';
+    card.style.transform  = 'translateX(20px)';
+    setTimeout(() => {
+      card.remove();
+      const list = document.getElementById('prayers-list');
+      if (list && !list.querySelector('.prayer-card')) {
+        list.innerHTML = `<div class="empty-state"><span class="empty-cross" aria-hidden="true">✝</span>Be the first to lift up ${esc(currentPerson)} in prayer…</div>`;
+      }
+    }, 300);
+    toast('Prayer removed. ✝');
+  }
+}
 
 // ── Prayer form (auth-aware) ──────────────────────────────────────────────
 function renderPrayerForm() {
